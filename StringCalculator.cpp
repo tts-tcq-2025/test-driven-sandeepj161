@@ -1,4 +1,3 @@
-// StringCalculator.cpp
 #include "StringCalculator.h"
 
 #include <algorithm>
@@ -21,9 +20,7 @@ std::string StringCalculator::getDelimiter(const std::string& input) {
   if (input.rfind("//", 0) == 0) {  // Starts with "//"
     size_t delimiterEnd = input.find("\n");
     if (delimiterEnd != std::string::npos) {
-      // Extract delimiter, e.g., ";" or "***"
       std::string delim = input.substr(2, delimiterEnd - 2);
-      // Remove brackets if present
       delim.erase(std::remove(delim.begin(), delim.end(), '['), delim.end());
       delim.erase(std::remove(delim.begin(), delim.end(), ']'), delim.end());
       return delim;
@@ -46,7 +43,7 @@ std::string StringCalculator::extractNumbersAfterPrefix(
   if (newlinePos != std::string::npos) {
     return input.substr(newlinePos + 1);
   }
-  return input;  // Fallback, though invalid per spec
+  return input;
 }
 
 std::string StringCalculator::replaceNewlinesWithDelimiter(
@@ -77,7 +74,7 @@ int StringCalculator::sumNumbers(const std::string& numbers,
 int StringCalculator::parseNumber(const std::string& part) {
   std::istringstream iss(part);
   int num;
-  iss >> num;  // Simple parse (assumes valid input as per kata)
+  iss >> num;
   return num;
 }
 
@@ -94,9 +91,20 @@ void StringCalculator::processPart(const std::string& part, int& sum,
                                    std::vector<int>& negatives) {
   if (part.empty()) return;
   int num = parseNumber(part);
+
   if (num < 0) {
-    negatives.push_back(num);
-  } else if (num <= 1000) {
+    handleNegative(num, negatives);
+    return;
+  }
+  handleNonNegative(num, sum);
+}
+
+void StringCalculator::handleNegative(int num, std::vector<int>& negatives) {
+  negatives.push_back(num);
+}
+
+void StringCalculator::handleNonNegative(int num, int& sum) {
+  if (num <= 1000) {
     sum += num;
   }
 }
@@ -121,6 +129,6 @@ std::vector<std::string> StringCalculator::split(const std::string& str,
     tokens.push_back(s.substr(0, pos));
     s.erase(0, pos + delimiter.length());
   }
-  tokens.push_back(s);  // Last token
+  tokens.push_back(s);
   return tokens;
 }
