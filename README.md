@@ -33,3 +33,106 @@ Start Test-driven approach
 1. Write the smallest possible failing test: give input `"" assert output to be 0 ` .
 2. Write the minimum amount of code that'll make it pass.
 3. Refactor any assumptions, continue to pass this test. Do not add any code without a corresponding test.
+
+## Test Specifications
+
+1) Empty input returns 0  
+- Input: `""`  
+- Action: `add`  
+- Expected: `0`
+
+2) Single number returns its value  
+- Input: `"1"`  
+- Action: `add`  
+- Expected: `1`
+
+3) Two numbers (comma-separated)  
+- Input: `"1,2"`  
+- Action: `add`  
+- Expected: `3`
+
+4) Arbitrary count of numbers  
+- Input: `"1,2,3,4"`  
+- Action: `add`  
+- Expected: `10`
+
+5) Newlines as delimiters (with commas)  
+- Input: `"1\n2,3"`  
+- Action: `add`  
+- Expected: `6`
+
+6) Custom single-character delimiter  
+- Input: `"//;\n1;2"`  
+- Action: `add`  
+- Expected: `3`
+
+7) Custom multi-character delimiter  
+- Input: `"//[***]\n1***2***3"`  
+- Action: `add`  
+- Expected: `6`
+
+8) Negative number throws with message (single)  
+- Input: `"1,-2,3"`  
+- Action: `add`  
+- Expected: Exception with message: `negatives not allowed: -2`
+
+9) Multiple negatives throw with full list  
+- Input: `"1,-2,-3"`  
+- Action: `add`  
+- Expected: Exception with message: `negatives not allowed: -2, -3`
+
+10) Numbers >1000 are ignored  
+- Input: `"2,1001"`  
+- Action: `add`  
+- Expected: `2`
+
+11) Boundary at 1000 is included  
+- Input: `"2,1000"`  
+- Action: `add`  
+- Expected: `1002`
+
+12) Header is optional (defaults apply without it)  
+- Input: `"1,2,3"`  
+- Action: `add`  
+- Expected: `6`
+
+13) Custom header at start defines delimiter  
+- Input: `"//;\n1;2,3"`  
+- Action: `add`  
+- Expected: `6`
+
+14) Multi-character delimiter with spaces  
+- Input: `"//[ab cd]\n1ab cd2ab cd3"`  
+- Action: `add`  
+- Expected: `6`
+
+15) Clarification-only (invalid tokenization not required)  
+- Input: `"1,\n"`  
+- Action: `add`  
+- Expected: Not required by spec (no test)
+
+16) Mixed default delimiters without header  
+- Input: `"4\n5,6"`  
+- Action: `add`  
+- Expected: `15`
+
+17) Custom delimiter with multiple values  
+- Input: `"//|\n1|2|3"`  
+- Action: `add`  
+- Expected: `6`
+
+18) Single value with custom delimiter  
+- Input: `"//;\n7"`  
+- Action: `add`  
+- Expected: `7`
+
+19) All values >1000 yield zero  
+- Input: `"1001,2000"`  
+- Action: `add`  
+- Expected: `0`
+
+20) Negative at start throws with message  
+- Input: `"-1,2,3"`  
+- Action: `add`  
+- Expected: Exception with message: `negatives not allowed: -1`
+
