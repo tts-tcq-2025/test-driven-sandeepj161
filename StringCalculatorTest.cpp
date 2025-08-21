@@ -2,7 +2,7 @@
 #include "StringCalculator.h"
 
 class StringCalculatorTest : public ::testing::Test {
- protected:
+protected:
   // cppcheck-suppress unusedStructMember
   StringCalculator calculator;
 };
