@@ -1,8 +1,9 @@
+// StringCalculatorTest.cpp
 #include <gtest/gtest.h>
 #include "StringCalculator.h"
 
 class StringCalculatorTest : public ::testing::Test {
-protected:
+  protected:
     StringCalculator calculator;
 };
 
