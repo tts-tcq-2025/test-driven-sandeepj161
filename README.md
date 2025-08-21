@@ -136,3 +136,109 @@ Start Test-driven approach
 - Action: `add`  
 - Expected: Exception with message: `negatives not allowed: -1`
 
+Feature: StringCalculator - Test Specifications
+
+  Background:
+    Given a fresh StringCalculator instance
+
+  Scenario: Empty input returns 0
+    Given the input ""
+    When I call add
+    Then the result should be 0
+
+  Scenario: Single number returns its value
+    Given the input "1"
+    When I call add
+    Then the result should be 1
+
+  Scenario: Two numbers (comma-separated)
+    Given the input "1,2"
+    When I call add
+    Then the result should be 3
+
+  Scenario: Arbitrary count of numbers
+    Given the input "1,2,3,4"
+    When I call add
+    Then the result should be 10
+
+  Scenario: Newlines as delimiters (with commas)
+    Given the input "1\n2,3"
+    When I call add
+    Then the result should be 6
+
+  Scenario: Custom single-character delimiter
+    Given the input "//;\n1;2"
+    When I call add
+    Then the result should be 3
+
+  Scenario: Custom multi-character delimiter
+    Given the input "//[***]\n1***2***3"
+    When I call add
+    Then the result should be 6
+
+  Scenario: Negative number throws with message (single)
+    Given the input "1,-2,3"
+    When I call add
+    Then an exception should be thrown with message "negatives not allowed: -2"
+
+  Scenario: Multiple negatives throw with full list
+    Given the input "1,-2,-3"
+    When I call add
+    Then an exception should be thrown with message "negatives not allowed: -2, -3"
+
+  Scenario: Numbers greater than 1000 are ignored
+    Given the input "2,1001"
+    When I call add
+    Then the result should be 2
+
+  Scenario: Boundary at 1000 is included
+    Given the input "2,1000"
+    When I call add
+    Then the result should be 1002
+
+  Scenario: Header is optional (defaults apply without it)
+    Given the input "1,2,3"
+    When I call add
+    Then the result should be 6
+
+  Scenario: Custom header at start defines delimiter
+    Given the input "//;\n1;2,3"
+    When I call add
+    Then the result should be 6
+
+  Scenario: Multi-character delimiter with spaces
+    Given the input "//[ab cd]\n1ab cd2ab cd3"
+    When I call add
+    Then the result should be 6
+
+  # Clarification-only; not required by the spec to validate
+  Scenario: Clarification-only invalid tokenization not required
+    Given the input "1,\n"
+    When I call add
+    Then no validation is required by the specification
+
+  Scenario: Mixed default delimiters without header
+    Given the input "4\n5,6"
+    When I call add
+    Then the result should be 15
+
+  Scenario: Custom delimiter with multiple values
+    Given the input "//|\n1|2|3"
+    When I call add
+    Then the result should be 6
+
+  Scenario: Single value with custom delimiter
+    Given the input "//;\n7"
+    When I call add
+    Then the result should be 7
+
+  Scenario: All values greater than 1000 yield zero
+    Given the input "1001,2000"
+    When I call add
+    Then the result should be 0
+
+  Scenario: Negative at start throws with message
+    Given the input "-1,2,3"
+    When I call add
+    Then an exception should be thrown with message "negatives not allowed: -1"
+
