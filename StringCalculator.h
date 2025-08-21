@@ -1,4 +1,3 @@
-// StringCalculator.h
 #ifndef STRINGCALCULATOR_H_
 #define STRINGCALCULATOR_H_
 
@@ -23,6 +22,8 @@ class StringCalculator {
                              std::vector<int>& negatives);
   void processPart(const std::string& part, int& sum,
                    std::vector<int>& negatives);
+  void handleNegative(int num, std::vector<int>& negatives);
+  void handleNonNegative(int num, int& sum);
   std::string buildNegativesErrorMessage(const std::vector<int>& negatives);
   std::vector<std::string> split(const std::string& str,
                                  const std::string& delimiter);
