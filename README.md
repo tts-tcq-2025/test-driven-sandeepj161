@@ -136,6 +136,8 @@ Start Test-driven approach
 - Action: `add`  
 - Expected: Exception with message: `negatives not allowed: -1`
 
+## Gherkin
+
 Feature: StringCalculator - Test Specifications
 
   Background:
@@ -241,4 +243,24 @@ Feature: StringCalculator - Test Specifications
     Given the input "-1,2,3"
     When I call add
     Then an exception should be thrown with message "negatives not allowed: -1"
+
+## Delimiter Format Validation – Test Scenarios
+
+| Test Case ID | Name                                   | Precondition              | Input                      | Action | Expected Output / Exception                          | Comment                                                |
+|--------------|----------------------------------------|---------------------------|----------------------------|--------|------------------------------------------------------|--------------------------------------------------------|
+| DFV01        | Header not at start is ignored         | Calculator instance ready | `"1,2\n//;\n3;4"`          | add    | `10`                                                 | Header must be at the very beginning to take effect.  |
+| DFV02        | Missing newline after header           | Calculator instance ready | `"//;1;2"`                 | add    | `0` or undefined by spec (not required to validate)  | Header format requires `\n` after delimiter.           |
+| DFV03        | Empty delimiter brackets               | Calculator instance ready | `"//[]\n1,2"`              | add    | `3`                                                  | Treats as default delimiters; empty custom ignored.    |
+| DFV04        | Multi-character delimiter bracketed    | Calculator instance ready | `"//[***]\n1***2***3"`     | add    | `6`                                                  | Valid multi-char delimiter only when bracketed.        |
+| DFV05        | Multi-character delimiter without []   | Calculator instance ready | `"//***\n1***2***3"`       | add    | `0` or undefined by spec (not required to validate)  | Without brackets, only single-char custom is valid.    |
+| DFV06        | Single-character custom delimiter      | Calculator instance ready | `"//;\n1;2;3"`             | add    | `6`                                                  | Valid single-char custom delimiter.                    |
+| DFV07        | Header with spaces in delimiter        | Calculator instance ready | `"//[ab cd]\n1ab cd2ab cd3"` | add  | `6`                                                  | Spaces allowed in bracketed multi-char delimiter.      |
+| DFV08        | Mixed default delimiters without header| Calculator instance ready | `"1\n2,3"`                 | add    | `6`                                                  | Default comma and newline both valid without header.   |
+| DFV09        | Mixed with custom header in payload    | Calculator instance ready | `"//;\n1;2,3"`             | add    | `6`                                                  | After header, payload can still include numbers; sum ok.|
+| DFV10        | Trailing delimiter (clarification only)| Calculator instance ready | `"1,\n"`                   | add    | Not required by spec (no test)                       | Clarification case; validator not required.            |
+| DFV11        | Multiple headers not supported         | Calculator instance ready | `"//;\n//|\n1|2"`          | add    | `3`                                                  | Only the first header at start is considered.          |
+| DFV12        | Header with missing closing bracket    | Calculator instance ready | `"//[**\n1**2**3"`         | add    | `0` or undefined by spec (not required to validate)  | Malformed bracketed delimiter; validation not required.|
+| DFV13        | Empty numbers line after header        | Calculator instance ready | `"//;\n"`                  | add    | `0`                                                  | No numbers yields 0.                                   |
+| DFV14        | Whitespace around header delimiter     | Calculator instance ready | `"//[  **  ]\n1  **  2"`   | add    | `3`                                                  | Whitespace inside brackets is part of delimiter.       |
+| DFV15        | Default delimiters with custom present | Calculator instance ready | `"//;\n1;2,3"`             | add    | `6`                                                  | Custom delimiter applies; extra comma still splits.    |
 
