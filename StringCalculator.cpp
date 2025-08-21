@@ -1,3 +1,4 @@
+// StringCalculator.cpp
 #include "StringCalculator.h"
 
 #include <algorithm>
@@ -17,18 +18,18 @@ int StringCalculator::add(const std::string& input) {
 }
 
 std::string StringCalculator::getDelimiter(const std::string& input) {
-  if (input.rfind("//", 0) == 0) {
+  if (input.rfind("//", 0) == 0) {  // Starts with "//"
     size_t delimiterEnd = input.find("\n");
     if (delimiterEnd != std::string::npos) {
-
+      // Extract delimiter, e.g., ";" or "***"
       std::string delim = input.substr(2, delimiterEnd - 2);
-
+      // Remove brackets if present
       delim.erase(std::remove(delim.begin(), delim.end(), '['), delim.end());
       delim.erase(std::remove(delim.begin(), delim.end(), ']'), delim.end());
       return delim;
     }
   }
-  return ",";
+  return ",";  // Default
 }
 
 std::string StringCalculator::getNumbersPart(const std::string& input,
@@ -45,7 +46,7 @@ std::string StringCalculator::extractNumbersAfterPrefix(
   if (newlinePos != std::string::npos) {
     return input.substr(newlinePos + 1);
   }
-  return input;
+  return input;  // Fallback, though invalid per spec
 }
 
 std::string StringCalculator::replaceNewlinesWithDelimiter(
@@ -84,15 +85,20 @@ int StringCalculator::collectNegativesAndSum(
     const std::vector<std::string>& parts, std::vector<int>& negatives) {
   int sum = 0;
   for (const auto& part : parts) {
-    if (part.empty()) continue;
-    int num = parseNumber(part);
-    if (num < 0) {
-      negatives.push_back(num);
-    } else if (num <= 1000) {
-      sum += num;
-    }
+    processPart(part, sum, negatives);
   }
   return sum;
+}
+
+void StringCalculator::processPart(const std::string& part, int& sum,
+                                   std::vector<int>& negatives) {
+  if (part.empty()) return;
+  int num = parseNumber(part);
+  if (num < 0) {
+    negatives.push_back(num);
+  } else if (num <= 1000) {
+    sum += num;
+  }
 }
 
 std::string StringCalculator::buildNegativesErrorMessage(
@@ -115,6 +121,6 @@ std::vector<std::string> StringCalculator::split(const std::string& str,
     tokens.push_back(s.substr(0, pos));
     s.erase(0, pos + delimiter.length());
   }
-  tokens.push_back(s);
+  tokens.push_back(s);  // Last token
   return tokens;
 }
