@@ -1,10 +1,10 @@
 #ifndef STRING_CALCULATOR_H_
 #define STRING_CALCULATOR_H_
 
-#include <stdexcept>  // std::runtime_error
-#include <string>     // std::string
-#include <utility>    // std::pair
-#include <vector>     // std::vector
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 class NegativeNumberException : public std::runtime_error {
  public:
@@ -14,22 +14,23 @@ class NegativeNumberException : public std::runtime_error {
 
 class StringCalculator {
  public:
-  // Aligns with Python: add(str_input) -> int
   int add(const std::string& input);
 
  private:
-  // Extensible helpers for future tasks (kept small to maintain CCN <= 3)
+  // Header parsing
   bool hasCustomDelimiter(const std::string& input) const;
   std::pair<std::string, std::string> splitHeaderAndNumbers(
       const std::string& input) const;
 
+  // Delimiters
   std::vector<std::string> extractDelimiters(const std::string& header) const;
 
+  // Tokenization and parsing
   std::vector<std::string> tokenize(
       const std::string& payload, const std::vector<std::string>& delimiters) const;
-
   std::vector<int> parseNumbers(const std::vector<std::string>& tokens) const;
 
+  // Rules
   void validateNoNegatives(const std::vector<int>& numbers) const;
 };
 
