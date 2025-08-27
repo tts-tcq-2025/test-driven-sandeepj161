@@ -12,8 +12,7 @@ class NegativeNumberException : public std::runtime_error {
 
 class StringCalculator {
  public:
-  // Mirrors Python: add(str_input) -> int
   int add(const std::string& input);
 };
 
-#endif  // STRING_CALCULATOR_H_
+#endif
