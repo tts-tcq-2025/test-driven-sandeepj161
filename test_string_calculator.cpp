@@ -1,5 +1,7 @@
 #include "./string_calculator.h"
-#include <gtest/gtest.h>
+
+#include <string>        // for std::string
+#include <gtest/gtest.h> // external header after project header
 
 class StringCalculatorTest : public ::testing::Test {
  protected:
