@@ -1,5 +1,4 @@
 #include "./string_calculator.h"
-
 #include <gtest/gtest.h>
 
 class StringCalculatorTest : public ::testing::Test {
