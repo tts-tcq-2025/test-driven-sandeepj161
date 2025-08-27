@@ -1,12 +1,11 @@
 #include "./string_calculator.h"
 
-#include <algorithm>  // std::move
-#include <charconv>   // std::from_chars
-#include <regex>      // std::regex, std::sregex_iterator, std::regex_match
-#include <sstream>    // std::ostringstream
-#include <string>     // std::string
-#include <utility>    // std::pair
-#include <vector>     // std::vector
+#include <charconv>
+#include <regex>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace {
 inline bool startsWith(const std::string& s, const char* pfx) {
@@ -41,64 +40,52 @@ inline std::pair<bool, int> toIntNoThrow(const std::string& s) {
   if (res.ec != std::errc{} || res.ptr != end) return {false, 0};
   return {true, value};
 }
-
-inline bool isBracketedHeader(const std::string& header) {
-  return !header.empty() && header.front() == '[';
-}
 }  // namespace
 
+// Keep add linear and short (CCN <= 3): early return, no nested branches.
 int StringCalculator::add(const std::string& input) {
-  // Minimal requirement from provided Python test: empty input => 0
   if (input.empty()) return 0;
 
-  // The following is a future-ready structure; currently kept minimal.
-  // Default delimiters
-  std::vector<std::string> delimiters{",", "\n"};
-
-  // If custom delimiter exists, split off the header and extend delimiters.
   std::string header;
   std::string payload;
 
   if (hasCustomDelimiter(input)) {
-    auto split = splitHeaderAndNumbers(input);
-    header = std::move(split.first);
-    payload = std::move(split.second);
-    if (!header.empty()) {
-      auto custom = extractDelimiters(header);
-      delimiters.insert(delimiters.end(), custom.begin(), custom.end());
-    }
+    auto hp = splitHeaderAndNumbers(input);
+    header = std::move(hp.first);
+    payload = std::move(hp.second);
   } else {
     payload = input;
   }
 
-  // For the current minimal requirement, allow single number or empty only.
+  std::vector<std::string> delimiters{",", "\n"};
+  if (!header.empty()) {
+    auto extra = extractDelimiters(header);
+    delimiters.insert(delimiters.end(), extra.begin(), extra.end());
+  }
+
   auto tokens = tokenize(payload, delimiters);
   auto numbers = parseNumbers(tokens);
-
   validateNoNegatives(numbers);
 
   int sum = 0;
-  for (int n : numbers) {
-    if (n <= 1000) sum += n;
-  }
+  for (int n : numbers) if (n <= 1000) sum += n;
   return sum;
 }
 
+// Straight string prefix check; keeps CCN minimal.
 bool StringCalculator::hasCustomDelimiter(const std::string& input) const {
   return input.size() >= 2 && input[0] == '/' && input[1] == '/';
 }
 
+// Simple split; malformed header => empty numbers to yield 0.
 std::pair<std::string, std::string> StringCalculator::splitHeaderAndNumbers(
     const std::string& input) const {
   const auto pos = input.find('\n');
-  if (pos == std::string::npos) {
-    // Malformed header: treat as no numbers (yields 0).
-    return {input.substr(2), ""};  //  two spaces before comment is preferred
-  }
-  // Strip leading "//"
+  if (pos == std::string::npos) return {input.substr(2), ""};
   return {input.substr(2, pos - 2), input.substr(pos + 1)};
 }
 
+// Helpers for delimiter extraction to keep complexity low.
 static std::vector<std::string> extractBracketedDelims(const std::string& header) {
   std::vector<std::string> delims;
   std::regex rx(R"(\[(.*?)\])");
@@ -106,28 +93,30 @@ static std::vector<std::string> extractBracketedDelims(const std::string& header
     const auto d = (*it).str(1);
     if (!d.empty()) delims.push_back(d);
   }
-  return delims;  //  may be empty => defaults only
+  return delims;  // may be empty => defaults only
 }
-
 static std::vector<std::string> extractSingleCharDelim(const std::string& header) {
   if (header.size() == 1) return {header};
-  return {};  //  ignore invalid unbracketed multi-char (e.g., "***")
+  return {};
 }
 
+// Flat dispatch: bracketed multi-char or exactly one char, else none.
 std::vector<std::string> StringCalculator::extractDelimiters(
     const std::string& header) const {
-  if (isBracketedHeader(header)) return extractBracketedDelims(header);
+  if (!header.empty() && header.front() == '[') return extractBracketedDelims(header);
   return extractSingleCharDelim(header);
 }
 
+// Tokenize is linear and pure.
 std::vector<std::string> StringCalculator::tokenize(
     const std::string& payload, const std::vector<std::string>& delimiters) const {
   if (payload.empty()) return {};
   std::regex splitter(joinAlternation(delimiters));
   std::sregex_token_iterator it(payload.begin(), payload.end(), splitter, -1), end;
-  return {it, end};  //  empties allowed; filtered in parseNumbers
+  return {it, end};
 }
 
+// Single loop with guard-continues; from_chars avoids exceptions (CCN <= 3).
 std::vector<int> StringCalculator::parseNumbers(
     const std::vector<std::string>& tokens) const {
   std::vector<int> nums;
@@ -141,18 +130,17 @@ std::vector<int> StringCalculator::parseNumbers(
   return nums;
 }
 
+// Linear check and early return (CCN <= 3).
 void StringCalculator::validateNoNegatives(const std::vector<int>& numbers) const {
-  std::vector<int> negs;
-  for (int n : numbers) {
-    if (n < 0) negs.push_back(n);
-  }
-  if (negs.empty()) return;
+  std::vector<int> negatives;
+  for (int n : numbers) if (n < 0) negatives.push_back(n);
+  if (negatives.empty()) return;
 
   std::ostringstream oss;
   oss << "negatives not allowed: ";
-  for (size_t i = 0; i < negs.size(); ++i) {
+  for (size_t i = 0; i < negatives.size(); ++i) {
     if (i) oss << ", ";
-    oss << negs[i];
+    oss << negatives[i];
   }
   throw NegativeNumberException(oss.str());
 }
