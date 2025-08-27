@@ -14,24 +14,22 @@ class NegativeNumberException : public std::runtime_error {
 
 class StringCalculator {
  public:
-  // Pure API: deterministic for a given input.
+  // Aligns with Python: add(str_input) -> int
   int add(const std::string& input);
 
  private:
-  // Header parsing
+  // Extensible helpers for future tasks (kept small to maintain CCN <= 3)
   bool hasCustomDelimiter(const std::string& input) const;
   std::pair<std::string, std::string> splitHeaderAndNumbers(
       const std::string& input) const;
 
-  // Delimiter extraction
   std::vector<std::string> extractDelimiters(const std::string& header) const;
 
-  // Tokenization and parsing
   std::vector<std::string> tokenize(
       const std::string& payload, const std::vector<std::string>& delimiters) const;
+
   std::vector<int> parseNumbers(const std::vector<std::string>& tokens) const;
 
-  // Rules
   void validateNoNegatives(const std::vector<int>& numbers) const;
 };
 
