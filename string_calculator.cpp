@@ -8,7 +8,6 @@
 #include <utility>    // std::pair
 #include <vector>     // std::vector
 
-// ---------- Tiny utilities (pure) ----------
 namespace {
 inline bool startsWith(const std::string& s, const char* pfx) {
   return s.rfind(pfx, 0) == 0;
@@ -46,16 +45,17 @@ inline std::pair<bool, int> toIntNoThrow(const std::string& s) {
 inline bool isBracketedHeader(const std::string& header) {
   return !header.empty() && header.front() == '[';
 }
-
-inline bool isSingleCharHeader(const std::string& header) {
-  return header.size() == 1;
-}
 }  // namespace
 
-// ---------- Public API ----------
 int StringCalculator::add(const std::string& input) {
+  // Minimal requirement from provided Python test: empty input => 0
   if (input.empty()) return 0;
 
+  // The following is a future-ready structure; currently kept minimal.
+  // Default delimiters
+  std::vector<std::string> delimiters{",", "\n"};
+
+  // If custom delimiter exists, split off the header and extend delimiters.
   std::string header;
   std::string payload;
 
@@ -63,16 +63,15 @@ int StringCalculator::add(const std::string& input) {
     auto split = splitHeaderAndNumbers(input);
     header = std::move(split.first);
     payload = std::move(split.second);
+    if (!header.empty()) {
+      auto custom = extractDelimiters(header);
+      delimiters.insert(delimiters.end(), custom.begin(), custom.end());
+    }
   } else {
     payload = input;
   }
 
-  std::vector<std::string> delimiters{",", "\n"};
-  if (!header.empty()) {
-    auto custom = extractDelimiters(header);
-    delimiters.insert(delimiters.end(), custom.begin(), custom.end());
-  }
-
+  // For the current minimal requirement, allow single number or empty only.
   auto tokens = tokenize(payload, delimiters);
   auto numbers = parseNumbers(tokens);
 
@@ -85,9 +84,8 @@ int StringCalculator::add(const std::string& input) {
   return sum;
 }
 
-// ---------- Header parsing ----------
 bool StringCalculator::hasCustomDelimiter(const std::string& input) const {
-  return startsWith(input, "//");
+  return input.size() >= 2 && input[0] == '/' && input[1] == '/';
 }
 
 std::pair<std::string, std::string> StringCalculator::splitHeaderAndNumbers(
@@ -101,7 +99,6 @@ std::pair<std::string, std::string> StringCalculator::splitHeaderAndNumbers(
   return {input.substr(2, pos - 2), input.substr(pos + 1)};
 }
 
-// ---------- Delimiter extraction ----------
 static std::vector<std::string> extractBracketedDelims(const std::string& header) {
   std::vector<std::string> delims;
   std::regex rx(R"(\[(.*?)\])");
@@ -123,7 +120,6 @@ std::vector<std::string> StringCalculator::extractDelimiters(
   return extractSingleCharDelim(header);
 }
 
-// ---------- Tokenization and parsing ----------
 std::vector<std::string> StringCalculator::tokenize(
     const std::string& payload, const std::vector<std::string>& delimiters) const {
   if (payload.empty()) return {};
@@ -145,7 +141,6 @@ std::vector<int> StringCalculator::parseNumbers(
   return nums;
 }
 
-// ---------- Rules ----------
 void StringCalculator::validateNoNegatives(const std::vector<int>& numbers) const {
   std::vector<int> negs;
   for (int n : numbers) {
