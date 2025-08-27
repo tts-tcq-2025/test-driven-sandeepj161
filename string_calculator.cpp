@@ -1,6 +1,6 @@
 #include "./string_calculator.h"
 
-#include <algorithm>  // std::move, std::max
+#include <algorithm>  // std::move
 #include <charconv>   // std::from_chars
 #include <regex>      // std::regex, std::sregex_iterator, std::regex_match
 #include <sstream>    // std::ostringstream
