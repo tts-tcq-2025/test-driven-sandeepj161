@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+// Custom exception for negative numbers
 class NegativeNumberException : public std::runtime_error {
  public:
   explicit NegativeNumberException(const std::string& message)
@@ -13,13 +14,18 @@ class NegativeNumberException : public std::runtime_error {
 
 class StringCalculator {
  public:
+  // Main entry point
   int add(const std::string& input);
 
  private:
-  std::pair<std::vector<std::string>, std::string> parseHeader(const std::string& input) const;
-  std::vector<int> tokenize(const std::string& input,
-                            const std::vector<std::string>& delimiters) const;
-  int computeSum(const std::vector<int>& numbers) const;
+  // Helpers
+  std::vector<std::string> tokenize(const std::string& input);
+  std::vector<int> convertToNumbers(const std::vector<std::string>& tokens);
+  void validateNumbers(const std::vector<int>& numbers);
+  int sumNumbers(const std::vector<int>& numbers);
+
+  // Constants
+  static constexpr int kMaxNumber = 1000;
 };
 
-#endif
+#endif  // STRING_CALCULATOR_H_

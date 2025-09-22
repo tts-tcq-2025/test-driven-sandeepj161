@@ -1,88 +1,96 @@
 #include "./string_calculator.h"
-#include <sstream>
-#include <regex>
+
 #include <algorithm>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
+// Public API
 int StringCalculator::add(const std::string& input) {
-    if (input.empty()) return 0;
+  if (input.empty()) return 0;
 
-    auto [delimiters, numbersPart] = parseHeader(input);
-    std::vector<int> numbers = tokenize(numbersPart, delimiters);
-    return computeSum(numbers);
+  auto tokens = tokenize(input);
+  auto numbers = convertToNumbers(tokens);
+  validateNumbers(numbers);
+  return sumNumbers(numbers);
 }
 
-// Parse optional header (e.g. //;\n or //[***]\n)
-std::pair<std::vector<std::string>, std::string>
-StringCalculator::parseHeader(const std::string& input) const {
-    if (input.rfind("//", 0) != 0) {
-        return {{",", "\n"}, input};
+// Splits input into tokens by default or custom delimiters
+std::vector<std::string> StringCalculator::tokenize(const std::string& input) {
+  std::string delimiters = ",\n";
+  std::string numbersPart = input;
+
+  // Handle custom delimiter syntax: "//<delimiter>\n"
+  if (input.rfind("//", 0) == 0) {
+    auto newlinePos = input.find('\n');
+    if (newlinePos != std::string::npos) {
+      delimiters = input.substr(2, newlinePos - 2);
+      numbersPart = input.substr(newlinePos + 1);
     }
+  }
 
-    size_t newlinePos = input.find('\n');
-    if (newlinePos == std::string::npos) {
-        return {{",", "\n"}, input};  // fallback if malformed
-    }
-
-    std::string header = input.substr(2, newlinePos - 2);
-    std::vector<std::string> delimiters;
-
-    if (header.size() >= 2 && header.front() == '[' && header.back() == ']') {
-        std::regex re("\\[(.*?)\\]");
-        std::sregex_iterator it(header.begin(), header.end(), re), end;
-        while (it != end) {
-            delimiters.push_back((*it)[1]);
-            ++it;
-        }
+  std::vector<std::string> tokens;
+  std::string token;
+  for (char c : numbersPart) {
+    if (delimiters.find(c) != std::string::npos) {
+      if (!token.empty()) {
+        tokens.push_back(token);
+        token.clear();
+      }
     } else {
-        delimiters.push_back(header);
+      token.push_back(c);
     }
+  }
+  if (!token.empty()) {
+    tokens.push_back(token);
+  }
 
-    if (delimiters.empty()) delimiters = {",", "\n"};
-    return {delimiters, input.substr(newlinePos + 1)};
+  return tokens;
 }
 
-// Split by any delimiter, convert to ints, enforce rules
-std::vector<int> StringCalculator::tokenize(
-    const std::string& input,
-    const std::vector<std::string>& delimiters) const {
+// Converts string tokens to integers
+std::vector<int> StringCalculator::convertToNumbers(
+    const std::vector<std::string>& tokens) {
+  std::vector<int> numbers;
+  numbers.reserve(tokens.size());
 
-    // Build regex like (delim1|delim2|...)
-    std::string pattern;
-    for (size_t i = 0; i < delimiters.size(); i++) {
-        if (i) pattern += "|";
-        pattern += "(" + std::regex_replace(delimiters[i], std::regex(R"([\^\$\.\|\?\*\+\(\)\[\{\\])"), R"(\\$&)") + ")";
+  for (const auto& token : tokens) {
+    if (!token.empty()) {
+      numbers.push_back(std::stoi(token));
     }
-    std::regex re(pattern);
+  }
 
-    std::sregex_token_iterator it(input.begin(), input.end(), re, -1), end;
-    std::vector<int> numbers;
-    for (; it != end; ++it) {
-        if (it->str().empty()) continue;
-        int value = std::stoi(it->str());
-        numbers.push_back(value);
-    }
-    return numbers;
+  return numbers;
 }
 
-// Sum numbers, throw on negatives, ignore >1000
-int StringCalculator::computeSum(const std::vector<int>& numbers) const {
-    std::vector<int> negatives;
-    int sum = 0;
-
-    for (int n : numbers) {
-        if (n < 0) negatives.push_back(n);
-        else if (n <= 1000) sum += n;
+// Validates for negative numbers
+void StringCalculator::validateNumbers(const std::vector<int>& numbers) {
+  std::vector<int> negatives;
+  for (int n : numbers) {
+    if (n < 0) {
+      negatives.push_back(n);
     }
+  }
 
-    if (!negatives.empty()) {
-        std::ostringstream oss;
-        oss << "negatives not allowed: ";
-        for (size_t i = 0; i < negatives.size(); i++) {
-            if (i) oss << ", ";
-            oss << negatives[i];
-        }
-        throw NegativeNumberException(oss.str());
+  if (!negatives.empty()) {
+    std::ostringstream oss;
+    oss << "Negatives not allowed: ";
+    for (size_t i = 0; i < negatives.size(); ++i) {
+      if (i > 0) oss << ", ";
+      oss << negatives[i];
     }
+    throw NegativeNumberException(oss.str());
+  }
+}
 
-    return sum;
+// Ignores numbers > 1000 and sums up the rest
+int StringCalculator::sumNumbers(const std::vector<int>& numbers) {
+  int sum = 0;
+  for (int n : numbers) {
+    if (n <= kMaxNumber) {
+      sum += n;
+    }
+  }
+  return sum;
 }
