@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 class NegativeNumberException : public std::runtime_error {
  public:
@@ -13,6 +14,12 @@ class NegativeNumberException : public std::runtime_error {
 class StringCalculator {
  public:
   int add(const std::string& input);
+
+ private:
+  std::pair<std::vector<std::string>, std::string> parseHeader(const std::string& input) const;
+  std::vector<int> tokenize(const std::string& input,
+                            const std::vector<std::string>& delimiters) const;
+  int computeSum(const std::vector<int>& numbers) const;
 };
 
 #endif
