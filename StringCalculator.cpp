@@ -1,71 +1,77 @@
 #include "StringCalculator.h"
-#include <sstream>
 #include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <algorithm>
 
-int StringCalculator::add(const std::string& numbers) {
-    if (numbers.empty()) return 0;
-
-    std::string numbersLine;
-    auto delimiters = extractDelimiters(numbers, numbersLine);
-    auto numList = splitNumbers(numbersLine, delimiters);
-    validateNegatives(numList);
-    return sumNumbers(numList);
+int StringCalculator::add(const std::string& input) {
+    if (isBlank(input)) return 0;
+    Parsed parsed = parseInput(input);
+    std::vector<int> numbers = splitNumbers(parsed.numbers, parsed.delimiters);
+    validateNoNegatives(numbers);
+    return calculateSum(numbers);
 }
 
 // ---------------- Helper Methods ----------------
 
-std::vector<std::string> StringCalculator::extractDelimiters(const std::string& numbers, std::string& numbersLine) {
-    numbersLine = numbers;
-    if (numbers.rfind("//", 0) != 0) return DEFAULT_DELIMITERS;
-
-    size_t newlinePos = numbers.find('\n');
-    std::string header = numbers.substr(0, newlinePos);
-    numbersLine = numbers.substr(newlinePos + 1);
-
-    auto multiDelims = parseMultiCharDelimiters(header);
-    if (!multiDelims.empty()) return multiDelims;
-
-    if (header.length() > 2) return {header.substr(2)};
-    return DEFAULT_DELIMITERS;
+bool StringCalculator::isBlank(const std::string& input) {
+    return input.empty();
 }
 
-std::vector<std::string> StringCalculator::parseMultiCharDelimiters(const std::string& header) {
-    std::regex multiCharRegex("\\[(.*?)\\]");
-    std::sregex_iterator iter(header.begin(), header.end(), multiCharRegex);
-    std::sregex_iterator end;
+StringCalculator::Parsed StringCalculator::parseInput(const std::string& input) {
+    const std::vector<std::string> DEFAULT_DELIMITERS = {",", "\n"};
 
-    std::vector<std::string> delimiters;
-    for (; iter != end; ++iter) {
-        delimiters.push_back((*iter)[1].str());
+    if (input.rfind("//", 0) == 0) {
+        size_t idx = input.find('\n');
+        std::vector<std::string> delimiters = DEFAULT_DELIMITERS;
+        auto customDelims = parseCustomDelimiters(input.substr(2, idx - 2));
+        delimiters.insert(delimiters.end(), customDelims.begin(), customDelims.end());
+        std::string numbers = input.substr(idx + 1);
+        return Parsed{numbers, delimiters};
     }
-    return delimiters;
+    return Parsed{input, DEFAULT_DELIMITERS};
 }
 
-std::vector<int> StringCalculator::splitNumbers(const std::string& numbersLine, const std::vector<std::string>& delimiters) {
+std::vector<std::string> StringCalculator::parseCustomDelimiters(const std::string& part) {
+    std::vector<std::string> result;
+
+    if (!part.empty() && part.front() == '[' && part.back() == ']') {
+        std::regex re(R"(\[(.*?)\])");
+        auto begin = std::sregex_iterator(part.begin(), part.end(), re);
+        auto end = std::sregex_iterator();
+
+        for (auto i = begin; i != end; ++i) {
+            result.push_back((*i)[1].str());
+        }
+    } else if (!part.empty()) {
+        result.push_back(part);
+    }
+
+    return result;
+}
+
+std::vector<int> StringCalculator::splitNumbers(const std::string& numbers, const std::vector<std::string>& delimiters) {
     std::string regexPattern;
-    for (const auto& d : delimiters) {
-        if (!regexPattern.empty()) regexPattern += "|";
-        regexPattern += std::regex_replace(d, std::regex(R"([\^$.|?*+(){}\[\]\\])"), R"(\\$&)");
+    for (size_t i = 0; i < delimiters.size(); ++i) {
+        if (i != 0) regexPattern += "|";
+        std::string d = std::regex_replace(delimiters[i], std::regex(R"([\^$.|?*+(){}\[\]\\])"), R"(\\$&)");
+        regexPattern += d;
     }
 
     std::regex re(regexPattern);
-    std::sregex_token_iterator iter(numbersLine.begin(), numbersLine.end(), re, -1);
+    std::sregex_token_iterator it(numbers.begin(), numbers.end(), re, -1);
     std::sregex_token_iterator end;
 
-    std::vector<int> numbers;
-    for (; iter != end; ++iter) {
-        std::string token = iter->str();
-        if (token.empty()) continue;
-        numbers.push_back(std::stoi(token));
+    std::vector<int> result;
+    for (; it != end; ++it) {
+        if (!it->str().empty()) result.push_back(std::stoi(it->str()));
     }
-    return numbers;
+    return result;
 }
 
-void StringCalculator::validateNegatives(const std::vector<int>& numbers) {
+void StringCalculator::validateNoNegatives(const std::vector<int>& numbers) {
     std::vector<int> negatives;
-    for (int n : numbers) if (isNegative(n)) negatives.push_back(n);
+    for (int n : numbers) if (n < 0) negatives.push_back(n);
 
     if (!negatives.empty()) {
         std::string msg = "negatives not allowed: ";
@@ -77,16 +83,8 @@ void StringCalculator::validateNegatives(const std::vector<int>& numbers) {
     }
 }
 
-int StringCalculator::sumNumbers(const std::vector<int>& numbers) {
+int StringCalculator::calculateSum(const std::vector<int>& numbers) {
     int sum = 0;
-    for (int n : numbers) if (isValidNumber(n)) sum += n;
+    for (int n : numbers) if (n <= 1000) sum += n;
     return sum;
-}
-
-bool StringCalculator::isNegative(int number) {
-    return number < 0;
-}
-
-bool StringCalculator::isValidNumber(int number) {
-    return number <= 1000;
 }
