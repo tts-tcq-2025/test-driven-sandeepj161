@@ -1,6 +1,7 @@
 #include "./string_calculator.h"
 
 #include <algorithm>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -16,12 +17,10 @@ int StringCalculator::add(const std::string& input) {
   return sumNumbers(numbers);
 }
 
-// Splits input into tokens by default or custom delimiters
 std::vector<std::string> StringCalculator::tokenize(const std::string& input) {
   std::string delimiters = ",\n";
   std::string numbersPart = input;
 
-  // Handle custom delimiter syntax: "//<delimiter>\n"
   if (input.rfind("//", 0) == 0) {
     auto newlinePos = input.find('\n');
     if (newlinePos != std::string::npos) {
@@ -42,14 +41,11 @@ std::vector<std::string> StringCalculator::tokenize(const std::string& input) {
       token.push_back(c);
     }
   }
-  if (!token.empty()) {
-    tokens.push_back(token);
-  }
+  if (!token.empty()) tokens.push_back(token);
 
   return tokens;
 }
 
-// Converts string tokens to integers
 std::vector<int> StringCalculator::convertToNumbers(
     const std::vector<std::string>& tokens) {
   std::vector<int> numbers;
@@ -60,18 +56,13 @@ std::vector<int> StringCalculator::convertToNumbers(
       numbers.push_back(std::stoi(token));
     }
   }
-
   return numbers;
 }
 
-// Validates for negative numbers
 void StringCalculator::validateNumbers(const std::vector<int>& numbers) {
   std::vector<int> negatives;
-  for (int n : numbers) {
-    if (n < 0) {
-      negatives.push_back(n);
-    }
-  }
+  std::copy_if(numbers.begin(), numbers.end(), std::back_inserter(negatives),
+               [](int n) { return n < 0; });
 
   if (!negatives.empty()) {
     std::ostringstream oss;
@@ -84,13 +75,9 @@ void StringCalculator::validateNumbers(const std::vector<int>& numbers) {
   }
 }
 
-// Ignores numbers > 1000 and sums up the rest
 int StringCalculator::sumNumbers(const std::vector<int>& numbers) {
-  int sum = 0;
-  for (int n : numbers) {
-    if (n <= kMaxNumber) {
-      sum += n;
-    }
-  }
-  return sum;
+  return std::accumulate(numbers.begin(), numbers.end(), 0,
+                         [](int acc, int n) {
+                           return acc + ((n <= kMaxNumber) ? n : 0);
+                         });
 }
