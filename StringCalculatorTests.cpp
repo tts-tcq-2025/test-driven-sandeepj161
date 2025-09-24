@@ -1,74 +1,104 @@
 #include "StringCalculator.h"
 #include <string>
-#include <cassert>
 #include <iostream>
+#include <stdexcept>
 
-void testEmptyInput() {
-  StringCalculator calc;
-  assert(calc.add("") == 0);
+// Simple test macros
+#define EXPECT_EQ(actual, expected) \
+    if ((actual) != (expected)) { \
+        std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
+                  << " Expected: " << (expected) \
+                  << " Got: " << (actual) << std::endl; \
+        return false; \
+    }
+
+#define EXPECT_THROW(statement, exceptionType) \
+    { \
+        bool thrown = false; \
+        try { \
+            statement; \
+        } catch (const exceptionType&) { \
+            thrown = true; \
+        } catch (...) { \
+            std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
+                      << " Unexpected exception type thrown." << std::endl; \
+            return false; \
+        } \
+        if (!thrown) { \
+            std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
+                      << " Expected exception not thrown." << std::endl; \
+            return false; \
+        } \
+    }
+
+// ---- Test Cases ----
+bool testEmptyString() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add(""), 0);
+    return true;
 }
 
-void testSingleNumber() {
-  StringCalculator calc;
-  assert(calc.add("1") == 1);
+bool testSingleNumber() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("1"), 1);
+    return true;
 }
 
-void testTwoNumbers() {
-  StringCalculator calc;
-  assert(calc.add("1,2") == 3);
+bool testTwoNumbers() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("1,2"), 3);
+    return true;
 }
 
-void testArbitraryCount() {
-  StringCalculator calc;
-  assert(calc.add("1,2,3,4") == 10);
+bool testMultipleNumbers() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("1,2,3,4"), 10);
+    return true;
 }
 
-void testNewlines() {
-  StringCalculator calc;
-  assert(calc.add("1\n2,3") == 6);
+bool testNewlineDelimiter() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("1\n2,3"), 6);
+    return true;
 }
 
-void testCustomDelimiter() {
-  StringCalculator calc;
-  assert(calc.add("//;\n1;2") == 3);
+bool testCustomDelimiter() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("//;\n1;2"), 3);
+    return true;
 }
 
-void testMultiCharDelimiter() {
-  StringCalculator calc;
-  assert(calc.add("//[***]\n1***2***3") == 6);
+bool testMultiCharDelimiter() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("//[***]\n1***2***3"), 6);
+    return true;
 }
 
-void testNegativeNumbers() {
-  StringCalculator calc;
-  try {
-    calc.add("1,-2,-3");
-    assert(false);  // Should not reach here
-  } catch (const NegativeNumberException& ex) {
-    std::string msg = ex.what();
-    assert(msg == "negatives not allowed: -2, -3");
-  }
+bool testNegativeNumbers() {
+    StringCalculator calc;
+    EXPECT_THROW(calc.add("1,-2,3"), NegativeNumberException);
+    return true;
 }
 
-void testIgnoreLargeNumbers() {
-  StringCalculator calc;
-  assert(calc.add("2,1001") == 2);
-  assert(calc.add("2,1000") == 1002);
+bool testIgnoreLargeNumbers() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("2,1001"), 2);
+    EXPECT_EQ(calc.add("2,1000"), 1002);
+    return true;
 }
 
-void runAllTests() {
-  testEmptyInput();
-  testSingleNumber();
-  testTwoNumbers();
-  testArbitraryCount();
-  testNewlines();
-  testCustomDelimiter();
-  testMultiCharDelimiter();
-  testNegativeNumbers();
-  testIgnoreLargeNumbers();
-  std::cout << "All tests passed!\n";
-}
-
+// ---- Main Runner ----
 int main() {
-  runAllTests();
-  return 0;
+    if (!testEmptyString()) return 1;
+    if (!testSingleNumber()) return 1;
+    if (!testTwoNumbers()) return 1;
+    if (!testMultipleNumbers()) return 1;
+    if (!testNewlineDelimiter()) return 1;
+    if (!testCustomDelimiter()) return 1;
+    if (!testMultiCharDelimiter()) return 1;
+    if (!testNegativeNumbers()) return 1;
+    if (!testIgnoreLargeNumbers()) return 1;
+
+    std::cout << "All tests passed successfully!" << std::endl;
+    return 0;
 }
