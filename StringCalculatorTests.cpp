@@ -41,49 +41,57 @@
 // -----------------------------
 bool testEmptyString() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add(""), 0);
+    auto result = calc.add("");
+    EXPECT_EQ(result, 0);
     return true;
 }
 
 bool testSingleNumber() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("1"), 1);
+    auto result = calc.add("1");
+    EXPECT_EQ(result, 1);
     return true;
 }
 
 bool testTwoNumbers() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("1,2"), 3);
+    auto result = calc.add("1,2");
+    EXPECT_EQ(result, 3);
     return true;
 }
 
 bool testMultipleNumbers() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("1,2,3,4"), 10);
+    auto result = calc.add("1,2,3,4");
+    EXPECT_EQ(result, 10);
     return true;
 }
 
 bool testNewlineDelimiter() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("1\n2,3"), 6);
+    auto result = calc.add("1\n2,3");
+    EXPECT_EQ(result, 6);
     return true;
 }
 
 bool testCustomDelimiter() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("//;\n1;2"), 3);
+    auto result = calc.add("//;\n1;2");
+    EXPECT_EQ(result, 3);
     return true;
 }
 
 bool testMultiCharDelimiter() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("//[***]\n1***2***3"), 6);
+    auto result = calc.add("//[***]\n1***2***3");
+    EXPECT_EQ(result, 6);
     return true;
 }
 
 bool testMultipleDelimiters() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("//[*][%]\n1*2%3"), 6);
+    auto result = calc.add("//[*][%]\n1*2%3");
+    EXPECT_EQ(result, 6);
     return true;
 }
 
@@ -95,8 +103,10 @@ bool testNegativeNumbers() {
 
 bool testIgnoreLargeNumbers() {
     StringCalculator calc;
-    EXPECT_EQ(calc.add("2,1001"), 2);
-    EXPECT_EQ(calc.add("2,1000"), 1002);
+    auto result1 = calc.add("2,1001");
+    EXPECT_EQ(result1, 2);
+    auto result2 = calc.add("2,1000");
+    EXPECT_EQ(result2, 1002);
     return true;
 }
 
