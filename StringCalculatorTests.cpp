@@ -1,19 +1,24 @@
 #include "StringCalculator.h"
-#include <string>
 #include <iostream>
 #include <stdexcept>
 
-// Simple test macros
+// -----------------------------
+// Minimal Test Framework Macros
+// -----------------------------
 #define EXPECT_EQ(actual, expected) \
-    if ((actual) != (expected)) { \
-        std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
-                  << " Expected: " << (expected) \
-                  << " Got: " << (actual) << std::endl; \
-        return false; \
-    }
+    do { \
+        auto actVal = (actual); \
+        auto expVal = (expected); \
+        if (actVal != expVal) { \
+            std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
+                      << " Expected: " << expVal \
+                      << " Got: " << actVal << std::endl; \
+            return false; \
+        } \
+    } while (0)
 
 #define EXPECT_THROW(statement, exceptionType) \
-    { \
+    do { \
         bool thrown = false; \
         try { \
             statement; \
@@ -29,9 +34,11 @@
                       << " Expected exception not thrown." << std::endl; \
             return false; \
         } \
-    }
+    } while (0)
 
-// ---- Test Cases ----
+// -----------------------------
+// Test Cases
+// -----------------------------
 bool testEmptyString() {
     StringCalculator calc;
     EXPECT_EQ(calc.add(""), 0);
@@ -74,6 +81,12 @@ bool testMultiCharDelimiter() {
     return true;
 }
 
+bool testMultipleDelimiters() {
+    StringCalculator calc;
+    EXPECT_EQ(calc.add("//[*][%]\n1*2%3"), 6);
+    return true;
+}
+
 bool testNegativeNumbers() {
     StringCalculator calc;
     EXPECT_THROW(calc.add("1,-2,3"), NegativeNumberException);
@@ -87,7 +100,9 @@ bool testIgnoreLargeNumbers() {
     return true;
 }
 
-// ---- Main Runner ----
+// -----------------------------
+// Main Test Runner
+// -----------------------------
 int main() {
     if (!testEmptyString()) return 1;
     if (!testSingleNumber()) return 1;
@@ -96,6 +111,7 @@ int main() {
     if (!testNewlineDelimiter()) return 1;
     if (!testCustomDelimiter()) return 1;
     if (!testMultiCharDelimiter()) return 1;
+    if (!testMultipleDelimiters()) return 1;
     if (!testNegativeNumbers()) return 1;
     if (!testIgnoreLargeNumbers()) return 1;
 
