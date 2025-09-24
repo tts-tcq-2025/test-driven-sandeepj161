@@ -1,4 +1,4 @@
-#include "StringCalculator/StringCalculator.h"
+#include "StringCalculator.h"
 #include <cassert>
 #include <iostream>
 
