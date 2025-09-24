@@ -3,6 +3,8 @@
 #include <cctype>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
+#include <string>
 
 // ------------------ NegativeNumberException ------------------
 
