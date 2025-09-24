@@ -1,6 +1,11 @@
 #ifndef STRINGCALCULATOR_H_
 #define STRINGCALCULATOR_H_
 
+// Tell cppcheck this is C++ code
+#if !defined(__cplusplus)
+#error "This header requires C++"
+#endif
+
 #include <exception>
 #include <string>
 #include <vector>
