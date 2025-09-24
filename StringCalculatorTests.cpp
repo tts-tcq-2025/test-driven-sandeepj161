@@ -1,4 +1,5 @@
 #include "StringCalculator.h"
+#include <string>
 #include <iostream>
 #include <stdexcept>
 
