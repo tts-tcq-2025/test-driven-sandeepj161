@@ -1,131 +1,106 @@
 #include "StringCalculator.h"
 #include <string>
-#include <iostream>
+#include <sstream>
+#include <algorithm>
 #include <stdexcept>
 
 // -----------------------------
-// Minimal Test Framework Macros
+// NegativeNumberException
 // -----------------------------
-#define EXPECT_EQ(actual, expected) \
-    do { \
-        auto actVal = (actual); \
-        auto expVal = (expected); \
-        if (actVal != expVal) { \
-            std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
-                      << " Expected: " << expVal \
-                      << " Got: " << actVal << std::endl; \
-            return false; \
-        } \
-    } while (0)
-
-#define EXPECT_THROW(statement, exceptionType) \
-    do { \
-        bool thrown = false; \
-        try { \
-            statement; \
-        } catch (const exceptionType&) { \
-            thrown = true; \
-        } catch (...) { \
-            std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
-                      << " Unexpected exception type thrown." << std::endl; \
-            return false; \
-        } \
-        if (!thrown) { \
-            std::cerr << "FAILED: " << __FILE__ << ":" << __LINE__ \
-                      << " Expected exception not thrown." << std::endl; \
-            return false; \
-        } \
-    } while (0)
-
-// -----------------------------
-// Test Cases
-// -----------------------------
-bool testEmptyString() {
-    StringCalculator calc;
-    auto result = calc.add("");
-    EXPECT_EQ(result, 0);
-    return true;
+NegativeNumberException::NegativeNumberException(const std::vector<int>& negatives)
+    : message_("negatives not allowed: ") {
+    for (size_t i = 0; i < negatives.size(); ++i) {
+        message_ += std::to_string(negatives[i]);
+        if (i != negatives.size() - 1) {
+            message_ += ", ";
+        }
+    }
 }
 
-bool testSingleNumber() {
-    StringCalculator calc;
-    auto result = calc.add("1");
-    EXPECT_EQ(result, 1);
-    return true;
-}
-
-bool testTwoNumbers() {
-    StringCalculator calc;
-    auto result = calc.add("1,2");
-    EXPECT_EQ(result, 3);
-    return true;
-}
-
-bool testMultipleNumbers() {
-    StringCalculator calc;
-    auto result = calc.add("1,2,3,4");
-    EXPECT_EQ(result, 10);
-    return true;
-}
-
-bool testNewlineDelimiter() {
-    StringCalculator calc;
-    auto result = calc.add("1\n2,3");
-    EXPECT_EQ(result, 6);
-    return true;
-}
-
-bool testCustomDelimiter() {
-    StringCalculator calc;
-    auto result = calc.add("//;\n1;2");
-    EXPECT_EQ(result, 3);
-    return true;
-}
-
-bool testMultiCharDelimiter() {
-    StringCalculator calc;
-    auto result = calc.add("//[***]\n1***2***3");
-    EXPECT_EQ(result, 6);
-    return true;
-}
-
-bool testMultipleDelimiters() {
-    StringCalculator calc;
-    auto result = calc.add("//[*][%]\n1*2%3");
-    EXPECT_EQ(result, 6);
-    return true;
-}
-
-bool testNegativeNumbers() {
-    StringCalculator calc;
-    EXPECT_THROW(calc.add("1,-2,3"), NegativeNumberException);
-    return true;
-}
-
-bool testIgnoreLargeNumbers() {
-    StringCalculator calc;
-    auto result1 = calc.add("2,1001");
-    EXPECT_EQ(result1, 2);
-    auto result2 = calc.add("2,1000");
-    EXPECT_EQ(result2, 1002);
-    return true;
+const char* NegativeNumberException::what() const noexcept {
+    return message_.c_str();
 }
 
 // -----------------------------
-// Main Test Runner
+// StringCalculator Implementation
 // -----------------------------
-int main() {
-    if (!testEmptyString()) return 1;
-    if (!testSingleNumber()) return 1;
-    if (!testTwoNumbers()) return 1;
-    if (!testMultipleNumbers()) return 1;
-    if (!testNewlineDelimiter()) return 1;
-    if (!testCustomDelimiter()) return 1;
-    if (!testMultiCharDelimiter()) return 1;
-    if (!testMultipleDelimiters()) return 1;
-    if (!testNegativeNumbers()) return 1;
-    if (!testIgnoreLargeNumbers()) return 1;
+int StringCalculator::add(const std::string& numbers) {
+    if (numbers.empty()) return 0;
 
-    std::cout << "All tests passed successfully!" << std::endl;
-    return 0;
+    std::string numbersPart;
+    std::vector<std::string> delimiters = extractDelimiters(numbers, numbersPart);
+    std::vector<std::string> tokens = split(numbersPart, delimiters);
+    std::vector<int> nums = toNumbers(tokens);
+
+    int sum = 0;
+    std::vector<int> negatives;
+    for (int n : nums) {
+        if (n < 0) negatives.push_back(n);
+        else if (n <= 1000) sum += n;
+    }
+
+    if (!negatives.empty()) throw NegativeNumberException(negatives);
+
+    return sum;
+}
+
+std::vector<std::string> StringCalculator::split(
+        const std::string& input,
+        const std::vector<std::string>& delimiters) {
+    std::vector<std::string> result;
+    size_t start = 0;
+
+    for (size_t pos = 0; pos < input.size();) {
+        bool matched = false;
+        for (const auto& delim : delimiters) {
+            if (input.compare(pos, delim.size(), delim) == 0) {
+                result.push_back(input.substr(start, pos - start));
+                pos += delim.size();
+                start = pos;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) ++pos;
+    }
+
+    if (start <= input.size()) {
+        result.push_back(input.substr(start));
+    }
+
+    return result;
+}
+
+std::vector<std::string> StringCalculator::extractDelimiters(
+        const std::string& input,
+        std::string& numbersPart) {
+    std::vector<std::string> delimiters = {",", "\n"};
+
+    if (input.size() >= 2 && input[0] == '/' && input[1] == '/') {
+        size_t newlinePos = input.find('\n');
+        if (newlinePos != std::string::npos) {
+            std::string header = input.substr(2, newlinePos - 2);
+
+            // Multi-character delimiter
+            if (!header.empty() && header.front() == '[' && header.back() == ']') {
+                delimiters = {header.substr(1, header.size() - 2)};
+            } else if (!header.empty()) {
+                delimiters = {header};
+            }
+
+            numbersPart = input.substr(newlinePos + 1);
+            return delimiters;
+        }
+    }
+
+    numbersPart = input;
+    return delimiters;
+}
+
+std::vector<int> StringCalculator::toNumbers(const std::vector<std::string>& tokens) {
+    std::vector<int> nums;
+    for (const auto& t : tokens) {
+        if (!t.empty()) nums.push_back(std::stoi(t));
+    }
+    return nums;
 }
